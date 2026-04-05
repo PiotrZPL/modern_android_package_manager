@@ -3,9 +3,13 @@ import 'dart:math';
 
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:android_package_manager_example/utils.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+
+int _androidSdkInt() {
+  final match = RegExp(r'\(SDK\s+(\d+)\)').firstMatch(Platform.operatingSystemVersion);
+  return int.tryParse(match?.group(1) ?? '') ?? 30;
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +22,7 @@ void main() {
         'Install Source Info Test',
         () async {
           expect(Platform.isAndroid, true,);
-          final androidInfo = await DeviceInfoPlugin().androidInfo;
-          final sdkInt = androidInfo.version.sdkInt;
+          final sdkInt = _androidSdkInt();
           expect(sdkInt >= 30, true,);
           final random = Random();
           final packages = await pm.getInstalledPackages();
@@ -43,8 +46,7 @@ void main() {
         'Installer Package Name Test',
         () async {
           expect(Platform.isAndroid, true,);
-          final androidInfo = await DeviceInfoPlugin().androidInfo;
-          final sdkInt = androidInfo.version.sdkInt;
+          final sdkInt = _androidSdkInt();
           if (sdkInt >= 30) {
             debugPrint('WARNING: Running deprecated method',);
           }

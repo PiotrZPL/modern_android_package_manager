@@ -9,6 +9,45 @@ import java.security.PublicKey
 import java.security.cert.Certificate
 import java.security.cert.CertificateEncodingException
 
+// Bundle metadata values can have mixed types, so this generic fallback still
+// needs the deprecated API until the plugin narrows reads to specific types.
+@Suppress("DEPRECATION")
+private fun Bundle.readValueCompat(key: String): Any? = get(key)
+
+// longVersionCode only exists on newer Android releases; this keeps package
+// version serialization working on older devices where versionCode is required.
+@Suppress("DEPRECATION")
+private fun PackageInfo.legacyVersionCodeCompat(): Int = versionCode
+
+private fun normalizeForChannel(value: Any?): Any? = when (value) {
+    null -> null
+    is Boolean,
+    is Int,
+    is Long,
+    is Double,
+    is String,
+    is ByteArray -> value
+    is Byte -> value.toInt()
+    is Short -> value.toInt()
+    is Float -> value.toDouble()
+    is Char -> value.toString()
+    is CharSequence -> value.toString()
+    is Bundle -> value.toMap()
+    is BooleanArray -> value.toList()
+    is ShortArray -> value.toList()
+    is IntArray -> value.toList()
+    is LongArray -> value.toList()
+    is FloatArray -> value.map { it.toDouble() }
+    is DoubleArray -> value.toList()
+    is CharArray -> value.concatToString()
+    is Array<*> -> value.map(::normalizeForChannel)
+    is List<*> -> value.map(::normalizeForChannel)
+    is Map<*, *> -> value.entries.associate { (key, nestedValue) ->
+        key.toString() to normalizeForChannel(nestedValue)
+    }
+    else -> value.toString()
+}
+
 fun ActivityInfo.toMap(): Map<String, Any?> {
     val componentInfo: ComponentInfo = this
     return componentInfo.toMap().let { cmpInfo ->
@@ -82,7 +121,7 @@ fun ApplicationInfo.toMap(): Map<String, Any?> {
                 baseMap += mapOf(
                     "category" to category,
                     "splitNames" to splitNames?.toList(),
-                    "storageUuid" to storageUuid.toString()
+                    "storageUuid" to storageUuid?.toString()
                 )
 
                 if (isAtLeastAndroid27()) {
@@ -143,13 +182,7 @@ fun Attribution.toMap(): Map<String, Any?> = mapOf(
 )
 
 fun Bundle.toMap(): Map<String, Any?> = this.keySet().map {
-    val value = get(it).run {
-        if (this is Array<*>) {
-            this.toList()
-        } else {
-            this
-        }
-    }
+    val value = normalizeForChannel(readValueCompat(it))
     Pair<String, Any?>(it, value)
 }.run {
     mapOf(*this.toTypedArray())
@@ -187,7 +220,7 @@ fun ComponentInfo.toMap(): Map<String, Any?> {
             if (isAtLeastAndroid26()) {
                 baseMap["splitName"] = splitName
                 if (isAtLeastAndroid31()) {
-                    baseMap["attributionTags"] = attributionTags.toList()
+                    baseMap["attributionTags"] = attributionTags?.toList()
                 }
             }
         }
@@ -221,7 +254,9 @@ fun InstallSourceInfo.toMap(): Map<String, Any?> = mapOf(
     "initiatingPackageName" to initiatingPackageName,
     "installingPackageName" to installingPackageName,
     "originatingPackageName" to originatingPackageName,
-    "initiatingPackageSigningInfo" to initiatingPackageSigningInfo?.toMap()
+    "initiatingPackageSigningInfo" to initiatingPackageSigningInfo?.toMap(),
+    "packageSource" to packageSource,
+    "updateOwnerPackageName" to updateOwnerPackageName,
 )
 
 fun InstrumentationInfo.toMap(): Map<String, Any?> {
@@ -262,7 +297,7 @@ fun PackageInfo.toMap(): Map<String, Any?> {
         "packageName" to packageName,
         "splitNames" to splitNames?.toList<String>(),
         "versionName" to versionName,
-        "versionCode" to versionCode,
+        "versionCode" to if (isAtLeastAndroid28()) longVersionCode.toInt() else legacyVersionCodeCompat(),
         "sharedUserId" to sharedUserId,
         "sharedUserLabel" to sharedUserLabel,
         "applicationInfo" to applicationInfo?.toMap(),
@@ -295,11 +330,7 @@ fun PackageInfo.toMap(): Map<String, Any?> {
         "reqFeatures" to reqFeatures?.map {
             it.toMap()
         },
-        "featureGroups" to featureGroups?.toList()?.map {
-            it.features.toList().map { info ->
-                info.toMap()
-            }
-        },
+        "featureGroups" to featureGroups?.map { it.toMap() },
         "installLocation" to installLocation,
     )
 
@@ -336,7 +367,7 @@ fun PackageItemInfo.toBaseMap(): MutableMap<String, Any?> = mutableMapOf(
     "name" to name,
     "packageName" to packageName,
     "labelRes" to labelRes,
-    "nonLocalizedLabel" to nonLocalizedLabel,
+    "nonLocalizedLabel" to nonLocalizedLabel?.toString(),
     "icon" to icon,
     "banner" to banner,
     "logo" to logo,
@@ -360,11 +391,11 @@ fun PermissionGroupInfo.toMap(): Map<String, Any?> {
 fun PermissionInfo.toMap(): Map<String, Any?> {
     val packageItemInfo: PackageItemInfo = this
     return packageItemInfo.toBaseMap().let {
-        val baseResult = mutableMapOf(
+        val baseResult = mutableMapOf<String, Any?>(
             "descriptionRes" to this.descriptionRes,
             "flags" to this.flags,
             "group" to this.group,
-            "nonLocalizedDescription" to this.nonLocalizedDescription,
+            "nonLocalizedDescription" to this.nonLocalizedDescription?.toString(),
         ).apply {
             putAll(it)
         }

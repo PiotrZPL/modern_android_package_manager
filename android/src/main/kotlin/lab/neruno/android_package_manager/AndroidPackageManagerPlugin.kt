@@ -411,6 +411,12 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         return null
     }
 
+    // Android 29 and lower still rely on the legacy installer lookup API, so
+    // keep the deprecated call isolated to this compatibility helper.
+    @Suppress("DEPRECATION")
+    private fun getInstallerPackageNameCompat(packageName: String): String? =
+        packageManager.getInstallerPackageName(packageName)
+
     private fun addWhitelistedRestrictedPermission(call: MethodCall, result: Result) {
         if (!isAtLeastAndroid29()) {
             result.error("UnsupportedException", "Requires at least Android 29 (Q)", null)
@@ -735,12 +741,18 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getInstallerPackageName(call: MethodCall, result: Result) {
-        if (isAtLeastAndroid30()) {
-            result.success(null)
-            return
-        }
-        providePackageName(call, result)?.let {
-            result.success(packageManager.getInstallerPackageName(it))
+        providePackageName(call, result)?.let { packageName ->
+            try {
+                result.success(
+                    if (isAtLeastAndroid30()) {
+                        packageManager.getInstallSourceInfo(packageName).installingPackageName
+                    } else {
+                        getInstallerPackageNameCompat(packageName)
+                    }
+                )
+            } catch (ex: PackageManager.NameNotFoundException) {
+                result.error(ex.javaClass.name, ex.message, null)
+            }
         }
     }
 

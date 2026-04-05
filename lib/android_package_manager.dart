@@ -36,25 +36,31 @@ abstract class AndroidPackageManager {
 
   Future<List<String>?> canonicalToCurrentPackageNames({
     required List<String> packageNames,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<CheckPermissionStatus?> checkPermission({
     required String packageName,
     required String permName,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<SignatureCheckResult> checkSignatures({
-    required String packageName1, required String packageName2,
-  }) => throw UnimplementedError();
+    required String packageName1,
+    required String packageName2,
+  }) =>
+      throw UnimplementedError();
 
   Future<List<String>?> currentToCanonicalPackageNames({
     required List<String> packageNames,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<Uint8List?> getActivityDrawableResource({
     required ComponentName componentName,
     required ActivityResourceType type,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<PermissionGroupInfo>?> getAllPermissionGroups({
     PermissionGroupInfoFlags? flags,
@@ -100,20 +106,23 @@ abstract class AndroidPackageManager {
 
   Future<List<ApplicationInfo>?> getInstalledApplications({
     ApplicationInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<PackageInfo>?> getInstalledPackages({
     PackageInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
-  /// Available for SDK Int < 30 (before Android R)
+  /// Uses InstallSourceInfo on Android 30+ and falls back to the legacy API on older versions.
   Future<String?> getInstallerPackageName({
     required String packageName,
   });
 
   Future<InstrumentationInfo?> getInstrumentationInfo({
     required ComponentName componentName,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<String?> getNameForUid(
     int uid,
@@ -123,47 +132,57 @@ abstract class AndroidPackageManager {
   Future<PackageInfo?> getPackageArchiveInfo({
     required String archiveFilePath,
     PackageInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<int>?> getPackageGids({
     required String packageName,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<PackageInfo?> getPackageInfo({
     required String packageName,
     PackageInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<String>?> getPackagesForUid(
     int uid,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<List<PackageInfo>?> getPackagesHoldingPermissions(
     Set<String> permissions,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<PermissionGroupInfo?> getPermissionGroupInfo(
     String packageName,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<PermissionInfo?> getPermissionInfo(
     String permName,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<ProviderInfo?> getProviderInfo({
     required ComponentName componentName,
     ComponentInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<ActivityInfo?> getReceiverInfo({
     required ComponentName componentName,
     ComponentInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<ServiceInfo?> getServiceInfo({
     required ComponentName componentName,
     ComponentInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<FeatureInfo>?> getSystemAvailableFeatures() =>
       throw UnimplementedError();
@@ -175,71 +194,85 @@ abstract class AndroidPackageManager {
     required int uid,
     required Uint8List certificateBytes,
     CertificateType type = CertificateType.rawX509,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<bool> hasSigningCertificate({
     required String packageName,
     required Uint8List certificateBytes,
     CertificateType type = CertificateType.rawX509,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<bool> hasSystemFeature({
     required String featureName,
     int? version,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<bool> isSafeMode() => throw UnimplementedError();
 
   Future<void> launchLeanback(
     String packageName,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<void> openApp(
     String packageName,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<List<ProviderInfo>?> queryContentProviders({
     required int uid,
     String? processName,
     ComponentInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<List<InstrumentationInfo>?> queryInstrumentation(
     String targetPackage,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<List<PermissionInfo>?> queryPermissionsByGroup(
     String permissionGroup,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<void> removePermission(
     String permName,
-  ) => throw UnimplementedError();
+  ) =>
+      throw UnimplementedError();
 
   Future<ProviderInfo?> resolveContentProvider({
     required String authority,
     ComponentInfoFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<void> setApplicationEnabledSetting({
     required String packageName,
     required ComponentEnabledState newState,
     EnabledFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<void> setComponentEnabledSetting({
     required ComponentName componentName,
     required ComponentEnabledState newState,
     EnabledFlags? flags,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<void> setInstallerPackageName({
     required String targetPackage,
     String? installerPackageName,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 
   Future<void> verifyPendingInstall({
     required int id,
     required VerificationCode verificationCode,
-  }) => throw UnimplementedError();
+  }) =>
+      throw UnimplementedError();
 }

@@ -24,105 +24,144 @@ class PackageInfoImpl extends PackageInfo {
   PackageInfoImpl(
     Map<String, dynamic> data,
   ) : super(
-    activities: safeListParse<ActivityInfo>(
-      data['activities'],
-      (data) => ActivityInfoImpl(
-        data,
-      ),
-    ),
-    applicationInfo: safeMapParse<ApplicationInfo>(
-      data['applicationInfo'],
-      (data) => ApplicationInfoImpl(
-        data,
-      ),
-    ),
-    configPreferences: safeListParse<ConfigurationInfo>(
-      data['configPreferences'],
-      (data) => ConfigurationInfoImpl(
-        data,
-      ),
-    ),
-    featureGroups: safeListParse<FeatureGroupInfo>(
-      data['featureGroups'],
-      (data) => FeatureGroupInfoImpl(
-        data,
-      ),
-    ),
-    firstInstallTime: data['firstInstallTime'],
-    gids: data['gids'],
-    installLocation: _parseInstallLocation(
-      data['installLocation'],
-    ),
-    instrumentation: safeListParse<InstrumentationInfo>(
-      data['instrumentation'],
-      (data) => InstrumentationInfoImpl(
-        data,
-      ),
-    ),
-    lastUpdateTime: data['lastUpdateTime'],
-    packageName: data['packageName'],
-    permissions: safeListParse<PermissionInfo>(
-      data['permissions'],
-      (data) => PermissionInfoImpl(
-        data,
-      ),
-    ),
-    providers: safeListParse<ProviderInfo>(
-      data['providers'],
-      (data) => ProviderInfoImpl(
-        data,
-      ),
-    ),
-    receivers: safeListParse<ActivityInfo>(
-      data['receivers'],
-      (data) => ActivityInfoImpl(
-        data,
-      ),
-    ),
-    reqFeatures: safeListParse<FeatureInfo>(
-      data['reqFeatures'],
-      (data) => FeatureInfoImpl(
-        data,
-      ),
-    ),
-    requestedPermissions: asTypedList<String>(
-      data['requestedPermissions'],
-    ),
-    requestedPermissionFlags: data['requestedPermissionFlags'],
-    services: safeListParse<ServiceInfo>(
-      data['services'],
-      (data) => ServiceInfoImpl(
-        data,
-      ),
-    ),
-    sharedUserId: data['sharedUserId'],
-    sharedUserLabel: data['sharedUserLabel'],
-    splitNames: data['splitNames']?.whereType<String>().toList(
-      growable: false,
-    ),
-    versionName: data['versionName'],
-    versionCode: data['versionCode'],
-    // Since Android 22
-    baseRevisionCode: data['baseRevisionCode'],
-    splitRevisionCodes: data['splitRevisionCodes'],
-    // Since Android 28
-    longVersionCode: data['longRevisionCode'],
-    signingInfo: safeMapParse(
-      data['signingInfo'], (data) => SigningInfoImpl(data,),
-    ),
-    // Since Android 29
-    isApex: data['isApex'],
-    // Since Android 31
-    attributions: safeMapParse(data['attributions'], (data) => data,),
-  );
+          activities: safeListParse<ActivityInfo>(
+            data['activities'],
+            (data) => ActivityInfoImpl(
+              data,
+            ),
+          ),
+          applicationInfo: safeMapParse<ApplicationInfo>(
+            data['applicationInfo'],
+            (data) => ApplicationInfoImpl(
+              data,
+            ),
+          ),
+          configPreferences: safeListParse<ConfigurationInfo>(
+            data['configPreferences'],
+            (data) => ConfigurationInfoImpl(
+              data,
+            ),
+          ),
+          featureGroups: _parseFeatureGroups(
+            data['featureGroups'],
+          ),
+          firstInstallTime: data['firstInstallTime'],
+          gids: asTypedList<int>(data['gids']),
+          installLocation: _parseInstallLocation(
+            data['installLocation'],
+          ),
+          instrumentation: safeListParse<InstrumentationInfo>(
+            data['instrumentation'],
+            (data) => InstrumentationInfoImpl(
+              data,
+            ),
+          ),
+          lastUpdateTime: data['lastUpdateTime'],
+          packageName: data['packageName'],
+          permissions: safeListParse<PermissionInfo>(
+            data['permissions'],
+            (data) => PermissionInfoImpl(
+              data,
+            ),
+          ),
+          providers: safeListParse<ProviderInfo>(
+            data['providers'],
+            (data) => ProviderInfoImpl(
+              data,
+            ),
+          ),
+          receivers: safeListParse<ActivityInfo>(
+            data['receivers'],
+            (data) => ActivityInfoImpl(
+              data,
+            ),
+          ),
+          reqFeatures: safeListParse<FeatureInfo>(
+            data['reqFeatures'],
+            (data) => FeatureInfoImpl(
+              data,
+            ),
+          ),
+          requestedPermissions: asTypedList<String>(
+            data['requestedPermissions'],
+          ),
+          requestedPermissionFlags: asTypedList<int>(
+            data['requestedPermissionsFlags'] ??
+                data['requestedPermissionFlags'],
+          ),
+          services: safeListParse<ServiceInfo>(
+            data['services'],
+            (data) => ServiceInfoImpl(
+              data,
+            ),
+          ),
+          sharedUserId: data['sharedUserId'],
+          sharedUserLabel: data['sharedUserLabel'],
+          splitNames: data['splitNames']?.whereType<String>().toList(
+                growable: false,
+              ),
+          versionName: data['versionName'],
+          versionCode: data['versionCode'],
+          // Since Android 22
+          baseRevisionCode: data['baseRevisionCode'],
+          splitRevisionCodes: asTypedList<int>(data['splitRevisionCodes']),
+          // Since Android 28
+          longVersionCode: data['longVersionCode'] ?? data['longRevisionCode'],
+          signingInfo: safeMapParse(
+            data['signingInfo'],
+            (data) => SigningInfoImpl(
+              data,
+            ),
+          ),
+          // Since Android 29
+          isApex: data['isApex'],
+          // Since Android 31
+          attributions: safeMapParse(
+            data['attributions'],
+            (data) => data,
+          ),
+        );
 
   static AndroidInstallLocation _parseInstallLocation(
     dynamic data,
   ) {
-    if (data is int) {
-      AndroidInstallLocation.values.asMap()[data + 1] ??
-          AndroidInstallLocation.unspecified;
+    switch (data) {
+      case -1:
+        return AndroidInstallLocation.unspecified;
+      case 0:
+        return AndroidInstallLocation.auto;
+      case 1:
+        return AndroidInstallLocation.internalOnly;
+      case 2:
+        return AndroidInstallLocation.preferExternal;
+      default:
+        return AndroidInstallLocation.unspecified;
     }
-    return AndroidInstallLocation.unspecified;
+  }
+
+  static List<FeatureGroupInfo>? _parseFeatureGroups(dynamic data) {
+    if (data is! List) {
+      return null;
+    }
+    final groups = <FeatureGroupInfo>[];
+    for (final entry in data) {
+      if (entry is List) {
+        groups.add(
+          FeatureGroupInfoImpl(
+            {
+              'features': entry,
+            },
+          ),
+        );
+        continue;
+      }
+      final map = safeInferAsMap(entry);
+      if (map != null) {
+        groups.add(
+          FeatureGroupInfoImpl(map),
+        );
+      }
+    }
+    return groups.toList(growable: false);
   }
 }

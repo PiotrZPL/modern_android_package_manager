@@ -131,6 +131,11 @@ fun ApkChecksum.toMap(): Map<String, Any?> = mapOf(
     "value" to value
 )
 
+fun ChangedPackages.toMap(): Map<String, Any?> = mapOf(
+    "packageNames" to packageNames,
+    "sequenceNumber" to sequenceNumber,
+)
+
 @RequiresApi(Build.VERSION_CODES.S)
 fun Attribution.toMap(): Map<String, Any?> = mapOf(
     "label" to label,

@@ -311,22 +311,26 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         api33ResultBuilder: (packageName: String, flags: F) -> T
     ) {
         providePackageName(call, result)?.run {
-            if (Build.VERSION.SDK_INT >= 33) {
-                result.success(
-                    api33ResultBuilder(
-                        this,
-                        flagFactory(
-                            provideFlagsAsLong(call)
+            try {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    result.success(
+                        api33ResultBuilder(
+                            this,
+                            flagFactory(
+                                provideFlagsAsLong(call)
+                            )
                         )
                     )
-                )
-            } else {
-                result.success(
-                    resultBuilder(
-                        this,
-                        provideFlags(call)
+                } else {
+                    result.success(
+                        resultBuilder(
+                            this,
+                            provideFlags(call)
+                        )
                     )
-                )
+                }
+            } catch (ex: PackageManager.NameNotFoundException) {
+                result.error(ex.javaClass.name, ex.message, null)
             }
         }
     }
@@ -622,29 +626,21 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getApplicationLabel(call: MethodCall, result: Result) {
-        try {
-            runWithPackageNameAndFlags(
-                call,
-                result,
-                flagFactory = { flags -> ApplicationInfoFlags.of(flags) },
-                resultBuilder = { packageName, flags ->
-                    result.success(
-                        packageManager.getApplicationLabel(
-                            packageManager.getApplicationInfo(packageName, flags)
-                        ).toString()
-                    )
-                },
-                api33ResultBuilder = { packageName, flags ->
-                    result.success(
-                        packageManager.getApplicationLabel(
-                            packageManager.getApplicationInfo(packageName, flags)
-                        ).toString()
-                    )
-                },
-            )
-        } catch (ex: PackageManager.NameNotFoundException) {
-            result.error(ex.javaClass.name, ex.message, null)
-        }
+        runWithPackageNameAndFlags(
+            call,
+            result,
+            flagFactory = { flags -> ApplicationInfoFlags.of(flags) },
+            resultBuilder = { packageName, flags ->
+                packageManager.getApplicationLabel(
+                    packageManager.getApplicationInfo(packageName, flags)
+                ).toString()
+            },
+            api33ResultBuilder = { packageName, flags ->
+                packageManager.getApplicationLabel(
+                    packageManager.getApplicationInfo(packageName, flags)
+                ).toString()
+            },
+        )
     }
 
     private fun getBackgroundPermissionOptionLabel(result: Result) {
@@ -665,7 +661,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             result.success(null)
             return
         }
-        result.success(packageManager.getChangedPackages(sequenceNumber))
+        result.success(packageManager.getChangedPackages(sequenceNumber)?.toMap())
     }
 
     private fun getComponentEnabledSetting(call: MethodCall, result: Result) {
@@ -877,10 +873,10 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             result,
             flagFactory = { flags -> PackageManager.PackageInfoFlags.of(flags) },
             resultBuilder = { packageName, flags ->
-                packageManager.getPackageInfo(packageName, flags).toMap()
+                packageManager.getPackageUid(packageName, flags)
             },
             api33ResultBuilder = { packageName, flags ->
-                packageManager.getPackageInfo(packageName, flags).toMap()
+                packageManager.getPackageUid(packageName, flags)
             }
         )
     }

@@ -59,12 +59,17 @@ abstract class AndroidPackageManager {
   Future<Uint8List?> getActivityDrawableResource({
     required ComponentName componentName,
     required ActivityResourceType type,
+    BitmapCompressFormat format = BitmapCompressFormat.png,
+    int quality = 100,
   }) =>
       throw UnimplementedError();
 
   Future<List<PermissionGroupInfo>?> getAllPermissionGroups({
     PermissionGroupInfoFlags? flags,
   });
+
+  Future<String?> getBackgroundPermissionOptionLabel() =>
+      throw UnimplementedError();
 
   Future<bool?> getApplicationEnabledSetting({
     required String packageName,
@@ -93,11 +98,24 @@ abstract class AndroidPackageManager {
     int quality = 100,
   });
 
+  Future<ChangedPackages?> getChangedPackages({
+    required int sequenceNumber,
+  }) =>
+      throw UnimplementedError();
+
   Future<bool?> getComponentEnabledSetting({
     required String packageName,
   });
 
   Future<Uint8List?> getDefaultActivityIcon();
+
+  Future<Uint8List?> getDrawable({
+    required String packageName,
+    required int resourceId,
+    BitmapCompressFormat format = BitmapCompressFormat.png,
+    int quality = 100,
+  }) =>
+      throw UnimplementedError();
 
   /// Available for SDK Int >= 30 (Android R)
   Future<InstallSourceInfo?> getInstallSourceInfo({
@@ -106,6 +124,11 @@ abstract class AndroidPackageManager {
 
   Future<List<ApplicationInfo>?> getInstalledApplications({
     ApplicationInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
+  Future<List<ModuleInfo>?> getInstalledModules({
+    InstalledModulesFlags? flags,
   }) =>
       throw UnimplementedError();
 
@@ -121,6 +144,18 @@ abstract class AndroidPackageManager {
 
   Future<InstrumentationInfo?> getInstrumentationInfo({
     required ComponentName componentName,
+    InstrumentationInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
+  Future<List<String>?> getMimeGroup(
+    String mimeGroup,
+  ) =>
+      throw UnimplementedError();
+
+  Future<ModuleInfo?> getModuleInfo({
+    required String packageName,
+    ModuleInfoFlags? flags,
   }) =>
       throw UnimplementedError();
 
@@ -146,6 +181,12 @@ abstract class AndroidPackageManager {
   }) =>
       throw UnimplementedError();
 
+  Future<int?> getPackageUid({
+    required String packageName,
+    PackageInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
   Future<List<String>?> getPackagesForUid(
     int uid,
   ) =>
@@ -157,13 +198,21 @@ abstract class AndroidPackageManager {
       throw UnimplementedError();
 
   Future<PermissionGroupInfo?> getPermissionGroupInfo(
-    String packageName,
-  ) =>
+    String groupName, {
+    PermissionGroupInfoFlags? flags,
+  }) =>
       throw UnimplementedError();
 
   Future<PermissionInfo?> getPermissionInfo(
-    String permName,
-  ) =>
+    String permName, {
+    PermissionInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
+  Future<PackageManagerProperty?> getProperty({
+    required String propertyName,
+    required String packageName,
+  }) =>
       throw UnimplementedError();
 
   Future<ProviderInfo?> getProviderInfo({
@@ -190,6 +239,23 @@ abstract class AndroidPackageManager {
   Future<List<String>?> getSystemSharedLibraryNames() =>
       throw UnimplementedError();
 
+  Future<int?> getTargetSdkVersion({
+    required String packageName,
+  }) =>
+      throw UnimplementedError();
+
+  Future<String?> getText({
+    required String packageName,
+    required int resourceId,
+  }) =>
+      throw UnimplementedError();
+
+  Future<List<String>?> getWhitelistedRestrictedPermissions({
+    required String packageName,
+    required int whitelistFlags,
+  }) =>
+      throw UnimplementedError();
+
   Future<bool> hasSigningCertificateByUid({
     required int uid,
     required Uint8List certificateBytes,
@@ -207,6 +273,29 @@ abstract class AndroidPackageManager {
   Future<bool> hasSystemFeature({
     required String featureName,
     int? version,
+  }) =>
+      throw UnimplementedError();
+
+  Future<bool?> isAutoRevokeWhitelisted({
+    String? packageName,
+  }) =>
+      throw UnimplementedError();
+
+  Future<bool?> isDeviceUpgrading() => throw UnimplementedError();
+
+  Future<bool?> isInstantApp({
+    String? packageName,
+  }) =>
+      throw UnimplementedError();
+
+  Future<bool?> isPackageSuspended({
+    String? packageName,
+  }) =>
+      throw UnimplementedError();
+
+  Future<bool?> isPermissionRevokedByPolicy({
+    required String packageName,
+    required String permName,
   }) =>
       throw UnimplementedError();
 
@@ -229,13 +318,40 @@ abstract class AndroidPackageManager {
   }) =>
       throw UnimplementedError();
 
-  Future<List<InstrumentationInfo>?> queryInstrumentation(
-    String targetPackage,
+  Future<List<PackageManagerProperty>?> queryActivityProperty(
+    String propertyName,
   ) =>
       throw UnimplementedError();
 
+  Future<List<PackageManagerProperty>?> queryApplicationProperty(
+    String propertyName,
+  ) =>
+      throw UnimplementedError();
+
+  Future<List<InstrumentationInfo>?> queryInstrumentation(
+    String targetPackage, {
+    InstrumentationInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
   Future<List<PermissionInfo>?> queryPermissionsByGroup(
-    String permissionGroup,
+    String permissionGroup, {
+    PermissionInfoFlags? flags,
+  }) =>
+      throw UnimplementedError();
+
+  Future<List<PackageManagerProperty>?> queryProviderProperty(
+    String propertyName,
+  ) =>
+      throw UnimplementedError();
+
+  Future<List<PackageManagerProperty>?> queryReceiverProperty(
+    String propertyName,
+  ) =>
+      throw UnimplementedError();
+
+  Future<List<PackageManagerProperty>?> queryServiceProperty(
+    String propertyName,
   ) =>
       throw UnimplementedError();
 
@@ -257,6 +373,12 @@ abstract class AndroidPackageManager {
   }) =>
       throw UnimplementedError();
 
+  Future<bool?> setAutoRevokeWhitelisted({
+    required String packageName,
+    required bool whitelisted,
+  }) =>
+      throw UnimplementedError();
+
   Future<void> setComponentEnabledSetting({
     required ComponentName componentName,
     required ComponentEnabledState newState,
@@ -267,6 +389,12 @@ abstract class AndroidPackageManager {
   Future<void> setInstallerPackageName({
     required String targetPackage,
     String? installerPackageName,
+  }) =>
+      throw UnimplementedError();
+
+  Future<void> setMimeGroup({
+    required String mimeGroup,
+    required Set<String> mimeTypes,
   }) =>
       throw UnimplementedError();
 

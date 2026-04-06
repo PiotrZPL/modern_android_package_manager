@@ -1,10 +1,13 @@
 export 'impl/activity_info.dart';
 export 'impl/application_info.dart';
+export 'impl/changed_packages.dart';
 export 'impl/configuration_info.dart';
 export 'impl/feature_info.dart';
 export 'impl/install_source_info_impl.dart';
 export 'impl/instrumentation_info.dart';
+export 'impl/module_info.dart';
 export 'impl/package_info.dart';
+export 'impl/package_manager_property.dart';
 export 'impl/permission_info.dart';
 export 'impl/provider_info.dart';
 export 'impl/service_info.dart';

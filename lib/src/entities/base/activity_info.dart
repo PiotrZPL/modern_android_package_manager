@@ -5,7 +5,6 @@ import 'package:android_package_manager/android_package_manager.dart';
 import 'component_info.dart';
 
 abstract class ActivityInfo extends ComponentInfo {
-
   ActivityInfo({
     this.theme,
     required this.launchMode,
@@ -26,17 +25,23 @@ abstract class ActivityInfo extends ComponentInfo {
     this.windowLayout,
     this.themeResource,
     Map? componentInfo,
-  }): super(
-    Map<String, dynamic>.from(componentInfo ?? {},),
-  );
+  }) : super(
+          Map<String, dynamic>.from(
+            componentInfo ?? {},
+          ),
+        );
 
   Future<Uint8List?> getIcon({
     int quality = 100,
     BitmapCompressFormat format = BitmapCompressFormat.png,
   }) async {
-    if (packageName != null) {
-      return AndroidPackageManager().getActivityIcon(
-        packageName: packageName!,
+    if (packageName != null && name != null) {
+      return AndroidPackageManager().getActivityDrawableResource(
+        componentName: ComponentName(
+          packageName!,
+          name!,
+        ),
+        type: ActivityResourceType.icon,
         format: format,
         quality: quality,
       );
@@ -48,9 +53,13 @@ abstract class ActivityInfo extends ComponentInfo {
     int quality = 100,
     BitmapCompressFormat format = BitmapCompressFormat.png,
   }) async {
-    if (packageName != null) {
-      return AndroidPackageManager().getActivityLogo(
-        packageName: packageName!,
+    if (packageName != null && name != null) {
+      return AndroidPackageManager().getActivityDrawableResource(
+        componentName: ComponentName(
+          packageName!,
+          name!,
+        ),
+        type: ActivityResourceType.logo,
         format: format,
         quality: quality,
       );
@@ -76,16 +85,17 @@ abstract class ActivityInfo extends ComponentInfo {
   final RotationAnimation rotationAnimation;
   final WindowLayout? windowLayout;
   final int? themeResource;
-
 }
 
 abstract class WindowLayout {
-
   WindowLayout({
-    this.width, this.widthFraction,
-    this.height, this.heightFraction,
+    this.width,
+    this.widthFraction,
+    this.height,
+    this.heightFraction,
     this.gravity,
-    this.minHeight, this.minWidth,
+    this.minHeight,
+    this.minWidth,
   });
 
   final int? width;
@@ -96,5 +106,4 @@ abstract class WindowLayout {
   final int? gravity;
   final int? minHeight;
   final int? minWidth;
-
 }

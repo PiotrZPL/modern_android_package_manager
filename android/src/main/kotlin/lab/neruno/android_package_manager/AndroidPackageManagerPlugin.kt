@@ -85,13 +85,10 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             "getChangedPackages" -> getChangedPackages(call, result)
             "getComponentEnabledSetting" -> getComponentEnabledSetting(call, result)
             "getDefaultActivityIcon" -> getDefaultActivityIcon(result)
-            "getDrawable" -> {
-                // TODO: Research or refer other drawable fetching plugins
-                result.success(null)
-            }
+            "getDrawable" -> getDrawable(call, result)
             "getInstallSourceInfo" -> getInstallSourceInfo(call, result)
             "getInstalledApplications" -> getInstalledApplications(call, result)
-            "getInstalledModules" -> getInstalledModules(result)
+            "getInstalledModules" -> getInstalledModules(call, result)
             "getInstalledPackages" -> getInstalledPackages(call, result)
             "getInstallerPackageName" -> getInstallerPackageName(call, result)
             "getInstantAppCookie" -> getInstantAppCookie(result)
@@ -145,10 +142,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             "getSystemAvailableFeatures" -> getSystemAvailableFeatures(result)
             "getSystemSharedLibraryNames" -> getSystemSharedLibraryNames(result)
             "getTargetSdkVersion" -> getTargetSdkVersion(call, result)
-            "getText" -> {
-                // TODO: Add ApplicationInfo handling
-                result.success(null)
-            }
+            "getText" -> getText(call, result)
             "getWhitelistedRestrictedPermissions" -> getWhitelistedRestrictedPermissions(call, result)
             "getXml" -> {
                 // TODO: Add ApplicationInfo and XmlResourceParser handlers
@@ -239,6 +233,17 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             return ComponentName(pkg, cls)
         } else {
             result?.success(null)
+        }
+        return null
+    }
+
+    private fun provideComponentNameOrLaunchComponent(call: MethodCall, result: Result): ComponentName? {
+        provideComponentName(call)?.let {
+            return it
+        }
+        providePackageName(call, result)?.let { packageName ->
+            return packageManager.getLaunchIntentForPackage(packageName)?.component
+                ?: packageManager.getLeanbackLaunchIntentForPackage(packageName)?.component
         }
         return null
     }
@@ -522,7 +527,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getActivityBanner(call: MethodCall, result: Result) {
-        provideComponentName(call, result)?.let {
+        provideComponentNameOrLaunchComponent(call, result)?.let {
             try {
                 sendDrawableResult(
                     packageManager.getActivityBanner(it),
@@ -536,7 +541,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getActivityIcon(call: MethodCall, result: Result) {
-        provideComponentName(call, result)?.let {
+        provideComponentNameOrLaunchComponent(call, result)?.let {
             try {
                 sendDrawableResult(
                     packageManager.getActivityIcon(it),
@@ -565,7 +570,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getActivityLogo(call: MethodCall, result: Result) {
-        provideComponentName(call, result)?.let {
+        provideComponentNameOrLaunchComponent(call, result)?.let {
             try {
                 sendDrawableResult(
                     packageManager.getActivityLogo(it),
@@ -671,7 +676,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     }
 
     private fun getComponentEnabledSetting(call: MethodCall, result: Result) {
-        provideComponentName(call, result)?.let {
+        provideComponentNameOrLaunchComponent(call, result)?.let {
             result.success(
                 packageManager.getComponentEnabledSetting(it)
             )
@@ -680,6 +685,26 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
 
     private fun getDefaultActivityIcon(result: Result) {
         sendDrawableResult(packageManager.defaultActivityIcon, null, result = result)
+    }
+
+    private fun getDrawable(call: MethodCall, result: Result) {
+        providePackageName(call, result)?.let { packageName ->
+            val resourceId = call.argument<Int>("resourceId")
+            if (resourceId == null) {
+                result.success(null)
+                return
+            }
+            try {
+                sendDrawableResult(
+                    packageManager.getDrawable(packageName, resourceId, null),
+                    call.argument<Int?>("quality"),
+                    call.argument<Int?>("format") ?: 0,
+                    result
+                )
+            } catch (ex: PackageManager.NameNotFoundException) {
+                result.error(ex.javaClass.name, ex.message, null)
+            }
+        }
     }
 
     private fun getInstallSourceInfo(call: MethodCall, result: Result) {
@@ -714,13 +739,14 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         )
     }
 
-    private fun getInstalledModules(result: Result) {
+    private fun getInstalledModules(call: MethodCall, result: Result) {
         if (!isAtLeastAndroid29()) {
             result.success(null)
             return
         }
+        val flags = provideFlags(call).takeIf { it != 0 } ?: PackageManager.MATCH_ALL
         result.success(
-            packageManager.getInstalledModules(PackageManager.MATCH_ALL).map {
+            packageManager.getInstalledModules(flags).map {
                 it.toMap()
             }
         )
@@ -775,11 +801,9 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
     private fun getInstrumentationInfo(call: MethodCall, result: Result) {
         provideComponentName(call, result)?.let {
             try {
-                packageManager.getInstrumentationInfo(it, PackageManager.GET_META_DATA).run {
-                    result.success(
-                        this.toMap()
-                    )
-                }
+                result.success(
+                    packageManager.getInstrumentationInfo(it, provideFlags(call)).toMap()
+                )
             } catch (ex: PackageManager.NameNotFoundException) {
                 result.error(ex.javaClass.name, ex.message, null)
             }
@@ -812,11 +836,9 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         }
         providePackageName(call, result)?.let {
             try {
-                packageManager.getModuleInfo(it, 0).run {
-                    result.success(
-                        this.toMap()
-                    )
-                }
+                result.success(
+                    packageManager.getModuleInfo(it, provideFlags(call)).toMap()
+                )
             } catch (ex: PackageManager.NameNotFoundException) {
                 result.error(ex.javaClass.name, ex.message, null)
             }
@@ -935,7 +957,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         }
         try {
             result.success(
-                packageManager.getPermissionGroupInfo(groupName, PackageManager.GET_META_DATA).toMap()
+                packageManager.getPermissionGroupInfo(groupName, provideFlags(call)).toMap()
             )
         } catch (ex: PackageManager.NameNotFoundException) {
             result.error(ex.javaClass.name, ex.message, null)
@@ -950,7 +972,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         }
         try {
             result.success(
-                packageManager.getPermissionInfo(permName, PackageManager.GET_META_DATA)?.toMap()
+                packageManager.getPermissionInfo(permName, provideFlags(call)).toMap()
             )
         } catch (ex: PackageManager.NameNotFoundException) {
             result.error(ex.javaClass.name, ex.message, null)
@@ -1066,6 +1088,27 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         providePackageName(call, result)?.let {
             try {
                 result.success(packageManager.getTargetSdkVersion(it))
+            } catch (ex: PackageManager.NameNotFoundException) {
+                result.error(ex.javaClass.name, ex.message, null)
+            }
+        }
+    }
+
+    private fun getText(call: MethodCall, result: Result) {
+        providePackageName(call, result)?.let { packageName ->
+            val resourceId = call.argument<Int>("resourceId")
+            if (resourceId == null) {
+                result.success(null)
+                return
+            }
+            try {
+                result.success(
+                    packageManager.getText(
+                        packageName,
+                        resourceId,
+                        packageManager.getApplicationInfo(packageName, 0)
+                    )?.toString()
+                )
             } catch (ex: PackageManager.NameNotFoundException) {
                 result.error(ex.javaClass.name, ex.message, null)
             }
@@ -1312,7 +1355,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
             return
         }
         result.success(
-            packageManager.queryInstrumentation(targetPackage, PackageManager.GET_META_DATA).map {
+            packageManager.queryInstrumentation(targetPackage, provideFlags(call)).map {
                 it.toMap()
             }
         )
@@ -1320,11 +1363,15 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
 
     private fun queryPermissionsByGroup(call: MethodCall, result: Result) {
         val permissionGroup = call.argument<String>("permissionGroup")
-        result.success(
-            packageManager.queryPermissionsByGroup(permissionGroup, PackageManager.GET_META_DATA).map {
-                it.toMap()
-            }
-        )
+        try {
+            result.success(
+                packageManager.queryPermissionsByGroup(permissionGroup, provideFlags(call)).map {
+                    it.toMap()
+                }
+            )
+        } catch (ex: PackageManager.NameNotFoundException) {
+            result.error(ex.javaClass.name, ex.message, null)
+        }
     }
 
     private fun queryProviderProperty(call: MethodCall, result: Result) {
@@ -1641,7 +1688,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
         var nFormat: Bitmap.CompressFormat
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val formats = Bitmap.CompressFormat.values()
-            nFormat = formats[format.coerceIn(0..formats.size)]
+            nFormat = formats[format.coerceIn(0, formats.lastIndex)]
             if (nFormat == Bitmap.CompressFormat.WEBP) {
                 nFormat = Bitmap.CompressFormat.WEBP_LOSSLESS
             }
@@ -1652,7 +1699,7 @@ class AndroidPackageManagerPlugin: FlutterPlugin, MethodCallHandler, ActivityAwa
                 Bitmap.CompressFormat.PNG,
                 Bitmap.CompressFormat.WEBP,
             )
-            nFormat = formats[format.coerceIn(0..formats.size)]
+            nFormat = formats[format.coerceIn(0, formats.lastIndex)]
         }
         result.success(
             drawable.run {
